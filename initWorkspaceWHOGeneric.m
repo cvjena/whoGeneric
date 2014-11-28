@@ -54,7 +54,11 @@ function initWorkspaceWHOGeneric
     clear ( 's_pathDemos' );   
     
     % minor things, e.g., warping of blocks or padding of arrays
-    addpath( 'misc' );    
+    b_recursive             = false; 
+    b_overwrite             = true;
+    s_pathMisc              = fullfile(pwd, 'misc');
+    addPathSafely ( s_pathMisc, b_recursive, b_overwrite )
+    clear ( 's_pathMisc' );
     
     
     % read images from given filename
