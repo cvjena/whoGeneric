@@ -5,11 +5,18 @@ function model = learn_dataset( pos, neg, bg, settings )
 % date:   13-02-2014 (dd-mm-yyyy) (last updated)
 % 
 % BRIEF
-%    Initialize model structure. (note: If you just have image patches, instead of bounding boxes, consider using learn.m directly)
+%    Learn an LDA model from provided positive examples. Negative data is
+%    either provided using a pre-computed struct (containing negative mean
+%    as well as covariance matrix) or will be computed from images in neg
+%    using several positions and scales of potential subimages
 % 
 % INPUT
 %     pos      -- is a struct array for the positive patches, with fields:
-%	              .im (full path to the image), .x1 (xmin), .y1 (ymin), .x2 (xmax), .y2 (ymax)
+%	              .im (full path to the image),
+%                 .x1 (optional, xmin), 
+%                 .y1 (optional, ymin), 
+%                 .x2 (optional, xmax), 
+%                 .y2 (optional, ymax)
 %     neg      -- struct array for the negative patches with field:
 %	              im: full path to the image 
 %                 Used only when the background statistics cannot be found.
@@ -21,11 +28,33 @@ function model = learn_dataset( pos, neg, bg, settings )
 % 
 
 
+    % have we any negative examples given?
     if ( isempty(neg) )
         allImages = {pos.im};
     else
         allImages = [ {pos.im}; {neg.im} ];
     end
+    
+    % have bounding boxes been provided? If not, take the entire image
+    % instead
+    % this is only needed for the posive images, since negative examples
+    % serve only for computing background statistics
+    if ( ~isfield( pos, 'x1') || ...
+         ~isfield( pos, 'x1') || ...
+         ~isfield( pos, 'x1') || ...
+         ~isfield( pos, 'x1') ...
+       )
+        s_imgfns =  {pos.im};
+        for i_idx = 1:length(s_imgfns)
+            s_fn = s_imgfns{i_idx};
+            img = imread ( s_fn );
+            pos(i_idx).x1 = 1;
+            pos(i_idx).y1 = 1;
+            pos(i_idx).x2 = size(img,2);
+            pos(i_idx).y2 = size(img,1);
+        end
+    end
+
 
     
     %use given background statistics if they exist; else build them
