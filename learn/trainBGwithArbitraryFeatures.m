@@ -81,7 +81,7 @@ function BG = trainBGwithArbitraryFeatures( allImages, settings )
     for i = 1:length(allImages)
         
       % progressbar-like output  
-      if(rem(i,100)==0)
+      if( rem(i,10)==1 )
           fprintf('%d / %d\n', i,length(allImages) );
       end
    
@@ -150,7 +150,7 @@ function BG = trainBGwithArbitraryFeatures( allImages, settings )
     for i = 1:length(allImages)
                 
         % progressbar-like output
-        if( rem(i,100)==0 )
+        if( rem(i,10)==1 )
             fprintf('%d / %d\n', i,length(allImages) );
         end
         im        = readImage( allImages{i} );

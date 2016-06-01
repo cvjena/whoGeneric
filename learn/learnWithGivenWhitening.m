@@ -1,5 +1,5 @@
-function modelNew = learnWithGivenWhitening(model,R, neg, pyraFeats, i_truncDim)
-% function modelNew = learnWithGivenWhitening(model,R, neg, pyraFeats, i_truncDim)
+function modelNew = learnWithGivenWhitening(model,R, neg, features, i_truncDim)
+% function modelNew = learnWithGivenWhitening(model,R, neg, features, i_truncDim)
 % BRIEF:
 %    Learn model by linear discriminant analysis with already given
 %    negative mean and covariance matrix
@@ -19,7 +19,8 @@ function modelNew = learnWithGivenWhitening(model,R, neg, pyraFeats, i_truncDim)
 % 
 %    R               -- covariance matrix learned previously
 %    neg             -- negative mean learned previously
-%    pyraFeats       -- features of positive examples
+%    features        -- features of positive examples FIXME write
+%                       dimensionality!
 %    i_truncDim      -- int, indicating which dimension, if any,  serves as 
 %                       truncation feature by being constant to zero ( as
 %                       done for DPM HOG features )
@@ -32,23 +33,29 @@ function modelNew = learnWithGivenWhitening(model,R, neg, pyraFeats, i_truncDim)
 % last time modified:   27-02-2014 (dd-mm-yyyy)
 
 
+    %num is the number of blocks we have for this cache
+    numSamples  = length(features);
+    
+    assert (numSamples >= 1, 'LDA - No features for model training provided');
 
-    [ny,nx,nf] = size(model.w);
+    model.d_detectionThreshold = 0; %FIXME
+
+    % we assume that all features of the positive class are of same size!
+    [ny,nx,nf] = size(features{1});
     
     if ( i_truncDim > 0 )
         nf = nf - 1;
     end
 
 
-    %num is the number of blocks we have for this cache
-    num  = length(pyraFeats);
-    feats = zeros(ny*nx*nf,num);
-
     % flatten features into single vectors
-    for i = 1:num
+    feats = zeros(ny*nx*nf,numSamples);
+    
+    for i = 1:numSamples      
+        
         % get current feature
-        feat = pyraFeats(i).feature;
-      
+        feat = features{i};
+        
         % possibly remove unneeded truncation feature
         if ( i_truncDim > 0 )
             feat = feat(:, :, 1:end~=i_truncDim );
@@ -65,8 +72,8 @@ function modelNew = learnWithGivenWhitening(model,R, neg, pyraFeats, i_truncDim)
     w=R\(R'\(pos-neg));
     
     % bring weight vector into correct layout
-    w = reshape(w,[ny nx nf]);
-
+    w = reshape(w,[ny nx nf]);     
+    
     if ( i_truncDim > 0 )
         % Add in occlusion feature
         %note: might only be troublesome if very first dim is the td...
@@ -75,9 +82,11 @@ function modelNew = learnWithGivenWhitening(model,R, neg, pyraFeats, i_truncDim)
                     w(:, :, i_truncDim:end) ); 
     end
     
+   
+    
     modelNew.w                    = w;
     % size of root filter in HOG cells
-    modelNew.i_numCells           = model.i_numCells;
+    modelNew.i_numCells           = [ny nx];
     % size of each cell in pixel
     modelNew.i_binSize            = model.i_binSize;    
     % strange interval
